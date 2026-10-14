@@ -1,14 +1,14 @@
 import React from "react";
-import { AbsoluteFill, Audio, Sequence, staticFile, useCurrentFrame, useVideoConfig, interpolate } from "remotion";
+import { AbsoluteFill, Audio, Sequence, staticFile, useVideoConfig } from "remotion";
 import { theme, T } from "./theme";
-import { exitP, sp } from "./lib";
+import { exitP, toFrames, useFrame } from "./lib";
 import { BgMesh, Grade, Grain, Vignette } from "./components/Layers";
 import { Stage } from "./components/Stage";
 import { Headline } from "./components/Headline";
 import { Cta } from "./components/Cta";
-import { AvatarBadge, Chip } from "./components/Bits";
+import { Chip } from "./components/Bits";
 
-// SFX land 2–3 frames before the visual they belong to.
+// SFX (in ticks) land 2–3 ticks before the visual they belong to.
 const SFX: [number, string, number][] = [
   [0, "whoosh", 0.45],
   [7, "pop", 0.8],
@@ -34,7 +34,7 @@ const SFX: [number, string, number][] = [
 const AGENT_CHIPS = ["Claude Code", "Codex", "Gemini CLI", "Cursor", "Copilot", "Amp", "OpenCode", "Antigravity"];
 
 const Agents: React.FC = () => {
-  const frame = useCurrentFrame();
+  const frame = useFrame();
   if (frame < T.agents + 20 || frame > T.approve) return null;
   return (
     <div
@@ -50,28 +50,9 @@ const Agents: React.FC = () => {
   );
 };
 
-// Brand badge in the corner during the story part, like in the blog's videos.
-const CornerBadge: React.FC = () => {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
-  if (frame > T.cta + 4) return null;
-  const p = sp(frame, fps, 10, theme.spring.smooth);
-  return (
-    <div
-      style={{
-        position: "absolute", left: 64, top: 1610, display: "flex", alignItems: "center", gap: 22,
-        opacity: Math.min(1, p) * exitP(frame, T.cta + 4, 8),
-        transform: `translateY(${interpolate(p, [0, 1], [30, 0]) + Math.sin(frame / 30) * 3}px)`,
-      }}
-    >
-      <AvatarBadge size={78} />
-      <div style={{ fontFamily: theme.fonts.body, fontWeight: 600, fontSize: 30, color: theme.colors.textDim }}>@ysk_ai1</div>
-    </div>
-  );
-};
-
 export const Reel: React.FC = () => {
-  const frame = useCurrentFrame();
+  const frame = useFrame();
+  const { fps } = useVideoConfig();
   // Subtle push-in on every cut keeps the frame alive.
   const cuts = [T.agents, T.approve, T.features, T.cta];
   const kick = cuts.reduce((acc, c) => acc + Math.max(0, 1 - Math.abs(frame - c - 2) / 6) * 0.012, 0);
@@ -80,14 +61,13 @@ export const Reel: React.FC = () => {
       <BgMesh />
       <AbsoluteFill style={{ transform: `scale(${1 + kick})`, perspective: 1600 }}>
         <Stage />
-        <Headline from={4} to={T.agents} kicker="Coucou · open source" lines={["Claude Code", "прямо в чёлке"]} accent="ЧЁЛКЕ" />
-        <Headline from={T.agents + 2} to={T.approve} kicker="Все сессии вживую" lines={["Все агенты —", "одним взглядом"]} accent="ВЗГЛЯДОМ" size={118} />
+        <Headline from={4} to={T.agents} kicker="Coucou · open source" lines={["Claude Code", "прямо в чёлке"]} accent="ЧЁЛКЕ" size={104} />
+        <Headline from={T.agents + 2} to={T.approve} kicker="Все сессии вживую" lines={["Все агенты —", "одним взглядом"]} accent="ВЗГЛЯДОМ" size={94} />
         <Agents />
-        <Headline from={T.approve + 2} to={T.features} kicker="Без переключения в терминал" lines={["Одобряй", "в один клик"]} accent="КЛИК" />
-        <Headline from={T.features + 1} to={T.features + 30} kicker="Фишка 01" lines={["Чат с Claude", "из чёлки"]} accent="CLAUDE" size={118} fast />
-        <Headline from={T.features + 30} to={T.features + 60} kicker="Фишка 02" lines={["Кидай файлы", "прямо в Mochi"]} accent="ФАЙЛЫ" size={118} fast />
-        <Headline from={T.features + 60} to={T.cta + 2} kicker="Фишка 03" lines={["И даже", "на телефоне"]} accent="ТЕЛЕФОНЕ" size={118} fast />
-        <CornerBadge />
+        <Headline from={T.approve + 2} to={T.features} kicker="Без переключения в терминал" lines={["Одобряй", "в один клик"]} accent="КЛИК" size={110} />
+        <Headline from={T.features + 1} to={T.features + 30} kicker="Фишка 01" lines={["Чат с Claude", "из чёлки"]} accent="CLAUDE" size={104} fast />
+        <Headline from={T.features + 30} to={T.features + 60} kicker="Фишка 02" lines={["Кидай файлы", "прямо в Mochi"]} accent="ФАЙЛЫ" size={104} fast />
+        <Headline from={T.features + 60} to={T.cta + 2} kicker="Фишка 03" lines={["И даже", "на телефоне"]} accent="ТЕЛЕФОНЕ" size={104} fast />
         <Cta />
       </AbsoluteFill>
       <Grade />
@@ -96,7 +76,7 @@ export const Reel: React.FC = () => {
 
       <Audio src={staticFile("sfx/music.wav")} volume={0.34} />
       {SFX.map(([f, name, v], i) => (
-        <Sequence key={i} from={f} layout="none">
+        <Sequence key={i} from={toFrames(f, fps)} layout="none">
           <Audio src={staticFile(`sfx/${name}.wav`)} volume={v} />
         </Sequence>
       ))}

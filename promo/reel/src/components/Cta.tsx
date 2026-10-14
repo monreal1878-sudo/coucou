@@ -1,26 +1,26 @@
 import React from "react";
-import { useCurrentFrame, useVideoConfig, interpolate } from "remotion";
+import {interpolate} from "remotion";
 import { theme, T } from "../theme";
-import { ease, sp } from "../lib";
+import { ease, sp, useFrame } from "../lib";
 import { Mochi } from "./Mochi";
-import { AvatarBadge, Chip } from "./Bits";
+import { Chip } from "./Bits";
+import { Trail } from "@remotion/motion-blur";
 
 // Payoff: Mochi bursts out with the wordmark, platforms, then the author CTA.
 export const Cta: React.FC = () => {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
+  const frame = useFrame();
   const start = T.cta + 12; // lands on the impact, beat 24
   if (frame < start - 2) return null;
   const f = frame - start;
 
-  const m = sp(f, fps, 0, theme.spring.bouncy);
-  const halo = sp(f, fps, 2, theme.spring.smooth);
+  const m = sp(f, 0, theme.spring.bouncy);
+  const halo = sp(f, 2, theme.spring.smooth);
   const pulse = 1 + Math.sin(f / 9) * 0.04;
   const rays = 14;
   const word = "COUCOU";
-  const sub = sp(f, fps, 22, theme.spring.snappy);
-  const author = sp(f, fps, 48, theme.spring.smooth);
-  const link = sp(f, fps, 58, theme.spring.snappy);
+  const sub = sp(f, 22, theme.spring.snappy);
+  const author = sp(f, 48, theme.spring.smooth);
+  const link = sp(f, 58, theme.spring.snappy);
   const hop = f > 24 ? Math.abs(Math.sin(f / 7)) * 8 : 0;
 
   return (
@@ -28,7 +28,7 @@ export const Cta: React.FC = () => {
       {/* rays + halo behind Mochi */}
       <div style={{ position: "absolute", left: 540, top: 630, transform: `rotate(${interpolate(halo, [0, 1], [-90, 0]) + f * 0.3}deg)` }}>
         {Array.from({ length: rays }).map((_, i) => {
-          const p = sp(f, fps, 2 + i * 1.2, theme.spring.snappy);
+          const p = sp(f, 2 + i * 1.2, theme.spring.snappy);
           return (
             <div
               key={i}
@@ -49,6 +49,8 @@ export const Cta: React.FC = () => {
           transform: `scale(${halo * pulse})`, opacity: halo,
         }}
       />
+      {/* motion blur on the fast pop */}
+      <Trail layers={4} lagInFrames={0.5} trailOpacity={0.45}>
       <div
         style={{
           position: "absolute", left: 540 - 190, top: 630 - 165 - hop,
@@ -58,16 +60,17 @@ export const Cta: React.FC = () => {
       >
         <Mochi id="hero" size={380} mood={f > 20 ? "happy" : "idle"} look={{ x: 0, y: 0.2 }} glow />
       </div>
+      </Trail>
 
       {/* wordmark */}
       <div
         style={{
           position: "absolute", top: 890, width: "100%", display: "flex", justifyContent: "center", gap: 6,
-          fontFamily: theme.fonts.display, fontWeight: 700, fontSize: 230, lineHeight: 1, color: theme.colors.text, letterSpacing: "0.01em",
+          fontFamily: theme.fonts.display, fontWeight: 700, fontSize: 190, lineHeight: 1, color: theme.colors.text, letterSpacing: "-0.02em",
         }}
       >
         {word.split("").map((ch, i) => {
-          const p = sp(f, fps, 8 + i * 3, theme.spring.bouncy);
+          const p = sp(f, 8 + i * 3, theme.spring.bouncy);
           return (
             <span
               key={i}
@@ -102,19 +105,18 @@ export const Cta: React.FC = () => {
       <div
         style={{
           position: "absolute", top: 1400, left: 90, right: 90, padding: "28px 34px", borderRadius: 40,
-          display: "flex", alignItems: "center", gap: 30,
+          display: "flex", justifyContent: "center", textAlign: "center",
           background: "rgba(23,19,16,0.85)", border: `1.5px solid ${theme.colors.cardBorder}`,
           opacity: author, transform: `translateY(${interpolate(author, [0, 1], [60, 0])}px) scale(${interpolate(author, [0, 1], [0.94, 1])})`,
         }}
       >
-        <AvatarBadge size={120} />
         <div>
           <div style={{ fontFamily: theme.fonts.body, fontWeight: 700, fontSize: 38, color: theme.colors.text }}>@ysk_ai1</div>
           <div
             style={{
               fontFamily: theme.fonts.display, fontWeight: 700, fontSize: 50, textTransform: "uppercase", marginTop: 4,
-              color: theme.colors.primary, textShadow: `0 0 30px ${theme.colors.primary}77`,
-              opacity: link, transform: `translateX(${interpolate(link, [0, 1], [-30, 0])}px)`,
+              color: theme.colors.primary,
+              opacity: link, transform: `translateY(${interpolate(link, [0, 1], [20, 0])}px) scale(${interpolate(link, [0, 1], [0.92, 1])})`,
             }}
           >
             Ссылка в описании

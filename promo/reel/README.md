@@ -1,9 +1,11 @@
 # Coucou — 15 s reel
 
-A 15-second vertical (1080×1920, 30 fps) promo reel about Coucou, built with [Remotion](https://remotion.dev).
+A 15-second vertical (1080×1920, 60 fps) promo reel about Coucou, built with [Remotion](https://remotion.dev).
 Everything is drawn in code: Mochi, the notch island, the phone. The sounds are synthesized by `scripts/sfx.mjs`.
 
-Style: the @ysk_ai1 blog look (warm graphite background, orange glow, condensed all-caps headlines, avatar badge) with Mochi's cream body from `design/captures/`.
+Style: the @ysk_ai1 blog look (warm graphite background, orange accents, all-caps Google Sans headlines) with Mochi's cream body from `design/captures/`.
+
+The timeline is written in ticks of 1/30 s (`src/theme.ts`, 15 ticks per beat at 120 BPM) and rendered at 60 fps: `useFrame()` converts the real frame to ticks, so every spring is sampled twice per tick. Fast moves (the phone, the dragged file, Mochi's final pop) get motion blur via `@remotion/motion-blur`.
 
 | Time | Beat |
 |------|------|

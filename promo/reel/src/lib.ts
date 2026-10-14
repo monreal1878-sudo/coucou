@@ -1,5 +1,16 @@
-import { interpolate, spring } from "remotion";
-import { theme } from "./theme";
+import { interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
+import { theme, TICKS } from "./theme";
+
+// Time in ticks (1/30 s), derived from the real fps. At 60 fps a tick advances
+// by 0.5 per frame, so every spring and curve is sampled twice as often.
+export const useFrame = () => {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  return (frame * TICKS) / fps;
+};
+
+// Ticks -> real frames, for <Sequence from> and other frame-based APIs.
+export const toFrames = (ticks: number, fps: number) => Math.round((ticks * fps) / TICKS);
 
 type Ease = (t: number) => number;
 
@@ -18,10 +29,9 @@ export const ease = (
 
 export const sp = (
   frame: number,
-  fps: number,
   delay = 0,
   config: { damping: number; stiffness: number; mass: number } = theme.spring.smooth,
-) => spring({ frame: frame - delay, fps, config });
+) => spring({ frame: frame - delay, fps: TICKS, config });
 
 export const mix = (p: number, a: number, b: number) => a + (b - a) * p;
 

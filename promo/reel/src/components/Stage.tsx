@@ -1,9 +1,10 @@
 import React from "react";
-import { useCurrentFrame, useVideoConfig, interpolate } from "remotion";
+import {interpolate} from "remotion";
 import { theme, T } from "../theme";
-import { ease, exitP, mix, sp } from "../lib";
+import { ease, exitP, mix, sp, useFrame } from "../lib";
 import { Mochi } from "./Mochi";
 import { Cursor } from "./Bits";
+import { Trail } from "@remotion/motion-blur";
 
 // The Mac screen: a bezel, a warm wallpaper, a terminal running Claude Code,
 // and the notch that grows into Coucou's island.
@@ -21,10 +22,10 @@ const KEYS: [number, number, number, number][] = [
   [340, 300, 62, 30],
 ];
 
-const islandGeom = (frame: number, fps: number) => {
+const islandGeom = (frame: number) => {
   let [, w, h, r] = KEYS[0];
   for (let i = 1; i < KEYS.length; i++) {
-    const p = sp(frame, fps, KEYS[i][0], theme.spring.island);
+    const p = sp(frame, KEYS[i][0], theme.spring.island);
     w += p * (KEYS[i][1] - KEYS[i - 1][1]);
     h += p * (KEYS[i][2] - KEYS[i - 1][2]);
     r += p * (KEYS[i][3] - KEYS[i - 1][3]);
@@ -34,9 +35,8 @@ const islandGeom = (frame: number, fps: number) => {
 
 // Content block visibility inside the island: enter after `a`, fast exit before `b`.
 const useBlock = (a: number, b: number, delay = 7) => {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
-  const p = sp(frame, fps, a + delay, theme.spring.smooth);
+  const frame = useFrame();
+  const p = sp(frame, a + delay, theme.spring.smooth);
   const o = Math.min(p * 1.3, 1) * exitP(frame, b, 6);
   const visible = frame >= a && frame < b;
   return { visible, o, y: interpolate(p, [0, 1], [26, 0]) + (1 - exitP(frame, b, 6)) * -20, s: interpolate(p, [0, 1], [0.96, 1]), p };
@@ -47,11 +47,10 @@ const Mono: React.FC<{ children: React.ReactNode; style?: React.CSSProperties }>
 );
 
 const HookContent: React.FC = () => {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
+  const frame = useFrame();
   const b = useBlock(6, 58, 4);
   if (!b.visible) return null;
-  const pop = sp(frame, fps, 9, theme.spring.bouncy);
+  const pop = sp(frame, 9, theme.spring.bouncy);
   const look = { x: Math.sin(frame / 9) * 0.6, y: 0.3 };
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 30, height: "100%", padding: "0 44px", opacity: exitP(frame, 58, 6) }}>
@@ -75,8 +74,7 @@ const SESSIONS = [
 ];
 
 const AgentsContent: React.FC = () => {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
+  const frame = useFrame();
   const b = useBlock(58, 148, 6);
   if (!b.visible) return null;
   return (
@@ -90,7 +88,7 @@ const AgentsContent: React.FC = () => {
       </div>
       {SESSIONS.map((s, i) => {
         const d = 66 + i * 5;
-        const p = sp(frame, fps, d, theme.spring.snappy);
+        const p = sp(frame, d, theme.spring.snappy);
         const step = Math.min(s.actions.length - 1, Math.max(0, Math.floor((frame - d - 14 + i * 7) / 22)));
         const [verb, file, diff] = s.actions[step];
         const tickP = ease(frame, [d + 14 + step * 22 - i * 7, d + 22 + step * 22 - i * 7], [0, 1]);
@@ -152,17 +150,16 @@ const Btn: React.FC<{ label: string; k?: string; kind: "dark" | "light" | "hot";
 const CLICK = 198;
 
 const ApproveContent: React.FC = () => {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
+  const frame = useFrame();
   const b = useBlock(148, 222, 6);
   if (!b.visible) return null;
   const st = (n: number) => {
-    const p = sp(frame, fps, 154 + n * 4, theme.spring.snappy);
+    const p = sp(frame, 154 + n * 4, theme.spring.snappy);
     return { opacity: Math.min(1, p * 1.4), transform: `translateY(${interpolate(p, [0, 1], [24, 0])}px)` };
   };
   const press = ease(frame, [CLICK - 3, CLICK], [0, 1]) * (1 - ease(frame, [CLICK + 2, CLICK + 8], [0, 1]));
   const hot = frame >= CLICK;
-  const badge = sp(frame, fps, 160, theme.spring.bouncy);
+  const badge = sp(frame, 160, theme.spring.bouncy);
   const shake = frame > 158 && frame < 172 ? Math.sin(frame * 2.2) * 4 * (1 - (frame - 158) / 14) : 0;
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 34, height: "100%", padding: "0 44px", opacity: exitP(frame, 222, 6) }}>
@@ -204,13 +201,12 @@ const ApproveContent: React.FC = () => {
 };
 
 const DoneContent: React.FC = () => {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
+  const frame = useFrame();
   const b = useBlock(222, 252, 3);
   if (!b.visible) return null;
   const hopT = Math.max(0, frame - 226);
   const hop = hopT < 22 ? Math.abs(Math.sin((hopT / 11) * Math.PI)) * 34 * (1 - hopT / 30) : 0;
-  const pop = sp(frame, fps, 224, theme.spring.bouncy);
+  const pop = sp(frame, 224, theme.spring.bouncy);
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 30, height: "100%", padding: "0 44px", opacity: exitP(frame, 252, 5) }}>
       <div style={{ transform: `translateY(${-hop}px) scale(${interpolate(pop, [0, 1], [0.6, 1])})` }}>
@@ -229,7 +225,7 @@ const DoneContent: React.FC = () => {
 const PROMPT = "Почему упал билд?";
 
 const ChatContent: React.FC = () => {
-  const frame = useCurrentFrame();
+  const frame = useFrame();
   const b = useBlock(252, 282, 4);
   if (!b.visible) return null;
   const chars = Math.floor(ease(frame, [258, 274], [0, PROMPT.length], theme.ease.inOut));
@@ -266,7 +262,7 @@ const ChatContent: React.FC = () => {
 };
 
 const FileContent: React.FC = () => {
-  const frame = useCurrentFrame();
+  const frame = useFrame();
   const b = useBlock(282, 312, 3);
   if (!b.visible) return null;
   const gulp = frame >= 298 && frame < 306;
@@ -290,7 +286,7 @@ const FileContent: React.FC = () => {
 };
 
 const PhoneTeaser: React.FC = () => {
-  const frame = useCurrentFrame();
+  const frame = useFrame();
   const b = useBlock(312, 340, 3);
   if (!b.visible) return null;
   return (
@@ -306,7 +302,7 @@ const PhoneTeaser: React.FC = () => {
 
 // The dragged file flying from the desktop into the island.
 const FlyingFile: React.FC = () => {
-  const frame = useCurrentFrame();
+  const frame = useFrame();
   if (frame < 284 || frame > 302) return null;
   const t = ease(frame, [285, 300], [0, 1], theme.ease.inOut);
   const x = mix(t, 620, 330);
@@ -327,13 +323,12 @@ const FlyingFile: React.FC = () => {
 };
 
 const Phone: React.FC = () => {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
+  const frame = useFrame();
   if (frame < 312 || frame > 346) return null;
-  const p = sp(frame, fps, 313, theme.spring.smooth);
+  const p = sp(frame, 313, theme.spring.smooth);
   const out = exitP(frame, 345, 7);
-  const di = sp(frame, fps, 322, theme.spring.bouncy);
-  const card = sp(frame, fps, 326, theme.spring.snappy);
+  const di = sp(frame, 322, theme.spring.bouncy);
+  const card = sp(frame, 326, theme.spring.snappy);
   return (
     <div
       style={{
@@ -380,7 +375,7 @@ const Phone: React.FC = () => {
 };
 
 const Wallpaper: React.FC = () => {
-  const frame = useCurrentFrame();
+  const frame = useFrame();
   const lines = ["› claude", "* Разбираю задачу…", "  Read  App.swift", "  Edit  App.swift  +12 −3", "  Bash  swift test"];
   return (
     <>
@@ -411,12 +406,11 @@ const Wallpaper: React.FC = () => {
 };
 
 export const Stage: React.FC = () => {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
-  const enter = sp(frame, fps, 0, theme.spring.smooth);
+  const frame = useFrame();
+  const enter = sp(frame, 0, theme.spring.smooth);
   const leave = ease(frame, [T.cta + 2, T.cta + 16], [0, 1], theme.ease.in);
   if (frame > T.cta + 18) return null;
-  const g = islandGeom(frame, fps);
+  const g = islandGeom(frame);
   return (
     <div
       style={{
@@ -457,8 +451,11 @@ export const Stage: React.FC = () => {
         </div>
         <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 90, background: `linear-gradient(0deg, ${theme.colors.primary}22, transparent)`, pointerEvents: "none" }} />
       </div>
-      <FlyingFile />
-      <Phone />
+      {/* motion blur on the fast moves */}
+      <Trail layers={4} lagInFrames={0.5} trailOpacity={0.45}>
+        <FlyingFile />
+        <Phone />
+      </Trail>
       <ApproveCursor />
     </div>
   );
@@ -466,7 +463,7 @@ export const Stage: React.FC = () => {
 
 // Cursor that travels to "Разрешить" and clicks it.
 const ApproveCursor: React.FC = () => {
-  const frame = useCurrentFrame();
+  const frame = useFrame();
   if (frame < 166 || frame > 222) return null;
   const t = ease(frame, [168, CLICK - 4], [0, 1], theme.ease.inOut);
   const x = mix(t, 900, 776);

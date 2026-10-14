@@ -27,8 +27,8 @@ export const theme = {
     eye: "#141010",
   },
   fonts: {
-    display: "Oswald",
-    body: "Inter",
+    display: "Google Sans",
+    body: "Google Sans",
     mono: "JetBrains Mono",
   },
   ease: {
@@ -44,9 +44,12 @@ export const theme = {
   },
 } as const;
 
-// Timeline (30 fps, 120 BPM => 15 frames per beat). Cuts land on beats.
+// The timeline is written in ticks of 1/30 s (120 BPM => 15 ticks per beat),
+// so cuts land on beats whatever the render fps. Render: 60 fps.
+export const TICKS = 30;
+export const FPS = 60;
+
 export const T = {
-  fps: 30,
   total: 450,
   hook: 0,
   agents: 60,

@@ -1,7 +1,7 @@
 import React from "react";
-import { useCurrentFrame, useVideoConfig, interpolate } from "remotion";
+import {interpolate} from "remotion";
 import { theme } from "../theme";
-import { ease, exitP, sp } from "../lib";
+import { ease, exitP, sp, useFrame } from "../lib";
 
 // Brand headline: dim kicker with an orange tick, then a huge condensed
 // all-caps hook. Words rise out of masks, staggered; one accent word glows.
@@ -15,14 +15,13 @@ export const Headline: React.FC<{
   top?: number;
   fast?: boolean;
 }> = ({ from, to, kicker, lines, accent, size = 128, top = 1085, fast = false }) => {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
+  const frame = useFrame();
   if (frame < from - 1 || frame > to) return null;
   const f = frame - from;
   const out = exitP(frame, to, 8);
   const outY = (1 - out) * -50;
 
-  const kp = sp(f, fps, 0, theme.spring.snappy);
+  const kp = sp(f, 0, theme.spring.snappy);
   let w = 0;
   return (
     <div
@@ -46,22 +45,22 @@ export const Headline: React.FC<{
         <div
           key={li}
           style={{
-            display: "flex", flexWrap: "wrap", gap: 26,
+            display: "flex", flexWrap: "wrap", gap: Math.round(size * 0.24),
             fontFamily: theme.fonts.display, fontWeight: 700, fontSize: size,
-            lineHeight: 1.04, letterSpacing: "-0.01em", textTransform: "uppercase",
+            lineHeight: 1.08, letterSpacing: "-0.025em", textTransform: "uppercase",
             color: theme.colors.text,
           }}
         >
           {line.split(" ").map((word, wi) => {
             const delay = fast ? 1 + li * 2 + w++ * 2 : 3 + li * 5 + w++ * 3;
-            const p = sp(f, fps, delay, theme.spring.snappy);
+            const p = sp(f, delay, theme.spring.snappy);
             const isAccent = word.replace(/[—,.!]/g, "").toUpperCase() === accent.toUpperCase();
             const bar = ease(f, [delay + 6, delay + (fast ? 14 : 20)], [0, 1]);
             return (
               <span
                 key={wi}
                 style={{
-                  display: "inline-block", overflow: p < 0.985 ? "hidden" : "visible",
+                  display: "inline-block", overflow: "hidden",
                   padding: "0.14em 0.04em 0.02em", margin: "-0.14em -0.04em -0.02em",
                 }}
               >
@@ -71,7 +70,6 @@ export const Headline: React.FC<{
                     opacity: Math.min(1, p * 1.4),
                     transform: `translateY(${interpolate(p, [0, 1], [105, 0])}%) rotate(${interpolate(p, [0, 1], [5, 0])}deg)`,
                     color: isAccent ? theme.colors.primary : undefined,
-                    textShadow: isAccent && p >= 0.985 ? `0 0 40px ${theme.colors.primary}88, 0 0 90px ${theme.colors.primary}44` : undefined,
                   }}
                 >
                   {word}

@@ -1,7 +1,6 @@
 import React from "react";
-import { useCurrentFrame } from "remotion";
 import { theme } from "../theme";
-import { squircle } from "../lib";
+import { squircle, useFrame } from "../lib";
 
 type Mood = "idle" | "happy" | "alert" | "gulp";
 
@@ -17,7 +16,7 @@ export const Mochi: React.FC<{
   id: string;
   style?: React.CSSProperties;
 }> = ({ size, mood = "idle", look = { x: 0, y: 0 }, tint, glow = false, id, style }) => {
-  const frame = useCurrentFrame();
+  const frame = useFrame();
   // Blink every ~2.7 s, 5 frames long.
   const cycle = (frame + id.length * 17) % 80;
   const blink = cycle < 5 ? Math.abs(Math.sin((cycle / 5) * Math.PI)) : 0;
